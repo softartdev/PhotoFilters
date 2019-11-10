@@ -1,18 +1,33 @@
+@file:Suppress("DEPRECATION")
+
 package com.softartdev.photofilters
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.Camera
+import android.media.MediaScannerConnection
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Rational
+import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.*
+import androidx.camera.core.CameraX
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureConfig
+import androidx.camera.core.PreviewConfig
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.softartdev.photofilters.utils.AutoFitPreviewBuilder
 import kotlinx.android.synthetic.main.activity_main.*
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -51,16 +66,24 @@ class MainActivity : AppCompatActivity() {
             }
         }
         camera_capture_button.setOnClickListener {
-            imageCapture?.takePicture(object : ImageCapture.OnImageCapturedListener() {
-                override fun onCaptureSuccess(image: ImageProxy?, rotationDegrees: Int) {
-                    val msg = "Photo capture succeeded: ${image?.image.toString()}"
-                    Log.d(TAG, msg)
-                    view_finder.post {
-                        Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
-                    }
-                    super.onCaptureSuccess(image, rotationDegrees)
-                }
+            val imageSavedListener = object : ImageCapture.OnImageSavedListener {
+                override fun onImageSaved(photoFile: File) {
+                    Log.d(TAG, "Photo capture succeeded: ${photoFile.absolutePath}")
 
+                    val photoUri = Uri.fromFile(photoFile)
+                    startActivity(FilterActivity.getStartIntent(this@MainActivity, photoUri))
+
+                    // Implicit broadcasts will be ignored for devices running API
+                    // level >= 24, so if you only target 24+ you can remove this statement
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                        sendBroadcast(Intent(Camera.ACTION_NEW_PICTURE, photoUri))
+                    }
+                    // If the folder selected is an external media directory, this is unnecessary
+                    // but otherwise other apps will not be able to access our images unless we
+                    // scan them using [MediaScannerConnection]
+                    val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(photoFile.extension)
+                    MediaScannerConnection.scanFile(this@MainActivity, arrayOf(photoFile.absolutePath), arrayOf(mimeType), null)
+                }
                 override fun onError(
                     imageCaptureError: ImageCapture.ImageCaptureError,
                     message: String,
@@ -72,7 +95,11 @@ class MainActivity : AppCompatActivity() {
                         Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
                     }
                 }
-            })
+            }
+            val metadata = ImageCapture.Metadata().apply {
+                isReversedHorizontal = lensFacing == CameraX.LensFacing.FRONT
+            }
+            imageCapture?.takePicture(getOutputMediaFile(), imageSavedListener, metadata)
         }
     }
 
@@ -111,6 +138,22 @@ class MainActivity : AppCompatActivity() {
         imageCapture = ImageCapture(imageCaptureConfig)
 
         CameraX.bindToLifecycle(this, preview, imageCapture)
+    }
+
+    private fun getOutputMediaFile(): File? {
+        val subDir = "Photo_Filters"
+        val mediaStorageDir = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), subDir)
+        mediaStorageDir.apply {
+            if (!exists()) {
+                if (!mkdirs()) {
+                    Log.d(TAG, "failed to create directory")
+                    return null
+                }
+            }
+        }
+        val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS", Locale.ROOT)
+        val timeStamp = simpleDateFormat.format(Date())
+        return File("${mediaStorageDir.path}${File.separator}IMG_$timeStamp.jpg")
     }
 
     override fun onRequestPermissionsResult(
