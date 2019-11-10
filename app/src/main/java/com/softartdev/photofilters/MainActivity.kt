@@ -52,7 +52,6 @@ class MainActivity : AppCompatActivity() {
             setTargetResolution(Size(640, 480))
         }.build()
 
-
         // Build the viewfinder use case
         val preview = Preview(previewConfig)
 
@@ -78,7 +77,7 @@ class MainActivity : AppCompatActivity() {
 
         // Build the image capture use case and attach button click listener
         val imageCapture = ImageCapture(imageCaptureConfig)
-        findViewById<ImageButton>(R.id.capture_button).setOnClickListener {
+        findViewById<ImageButton>(R.id.camera_capture_button).setOnClickListener {
             val file = File(externalMediaDirs.first(), "${System.currentTimeMillis()}.jpg")
 
             imageCapture.takePicture(file, executor, object : ImageCapture.OnImageSavedListener {
@@ -132,10 +131,6 @@ class MainActivity : AppCompatActivity() {
         viewFinder.setTransform(matrix)
     }
 
-    /**
-     * Process result from permission request dialog box, has the request
-     * been granted? If yes, start Camera. Otherwise display a toast
-     */
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<String>,
@@ -152,9 +147,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Check if all permission specified in the manifest have been granted
-     */
     private fun allPermissionsGranted(): Boolean = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
