@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.softartdev.photofilters
 
 import android.Manifest
@@ -38,7 +36,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        lensFacing = savedInstanceState?.getInt(KEY_LENS_FACING)?.let { CameraX.LensFacing.values()[it] }
+        lensFacing =
+            savedInstanceState?.getInt(KEY_LENS_FACING)?.let { CameraX.LensFacing.values()[it] }
                 ?: CameraX.LensFacing.BACK
         // Request camera permissions
         if (allPermissionsGranted()) {
@@ -66,36 +65,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         camera_capture_button.setOnClickListener {
-            val imageSavedListener = object : ImageCapture.OnImageSavedListener {
-                override fun onImageSaved(photoFile: File) {
-                    Log.d(TAG, "Photo capture succeeded: ${photoFile.absolutePath}")
-
-                    val photoUri = Uri.fromFile(photoFile)
-                    startActivity(FilterActivity.getStartIntent(this@MainActivity, photoUri))
-
-                    // Implicit broadcasts will be ignored for devices running API
-                    // level >= 24, so if you only target 24+ you can remove this statement
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                        sendBroadcast(Intent(Camera.ACTION_NEW_PICTURE, photoUri))
-                    }
-                    // If the folder selected is an external media directory, this is unnecessary
-                    // but otherwise other apps will not be able to access our images unless we
-                    // scan them using [MediaScannerConnection]
-                    val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(photoFile.extension)
-                    MediaScannerConnection.scanFile(this@MainActivity, arrayOf(photoFile.absolutePath), arrayOf(mimeType), null)
-                }
-                override fun onError(
-                    imageCaptureError: ImageCapture.ImageCaptureError,
-                    message: String,
-                    cause: Throwable?
-                ) {
-                    val msg = "Photo capture failed: $message"
-                    Log.e(TAG, msg, cause)
-                    view_finder.post {
-                        Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
+            val imageSavedListener = createImageSavedListener()
             val metadata = ImageCapture.Metadata().apply {
                 isReversedHorizontal = lensFacing == CameraX.LensFacing.FRONT
             }
@@ -140,9 +110,49 @@ class MainActivity : AppCompatActivity() {
         CameraX.bindToLifecycle(this, preview, imageCapture)
     }
 
+    private fun createImageSavedListener(): ImageCapture.OnImageSavedListener =
+        object : ImageCapture.OnImageSavedListener {
+            override fun onImageSaved(photoFile: File) {
+                Log.d(TAG, "Photo capture succeeded: ${photoFile.absolutePath}")
+
+                val photoUri = Uri.fromFile(photoFile)
+                startActivity(FilterActivity.getStartIntent(this@MainActivity, photoUri))
+
+                // Implicit broadcasts will be ignored for devices running API
+                // level >= 24, so if you only target 24+ you can remove this statement
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                    sendBroadcast(Intent(Camera.ACTION_NEW_PICTURE, photoUri))
+                }
+                // If the folder selected is an external media directory, this is unnecessary
+                // but otherwise other apps will not be able to access our images unless we
+                // scan them using [MediaScannerConnection]
+                val mimeType =
+                    MimeTypeMap.getSingleton().getMimeTypeFromExtension(photoFile.extension)
+                MediaScannerConnection.scanFile(
+                    this@MainActivity,
+                    arrayOf(photoFile.absolutePath),
+                    arrayOf(mimeType),
+                    null
+                )
+            }
+
+            override fun onError(
+                imageCaptureError: ImageCapture.ImageCaptureError,
+                message: String,
+                cause: Throwable?
+            ) {
+                val msg = "Photo capture failed: $message"
+                Log.e(TAG, msg, cause)
+                view_finder.post {
+                    Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
     private fun getOutputMediaFile(): File? {
+        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
         val subDir = "Photo_Filters"
-        val mediaStorageDir = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), subDir)
+        val mediaStorageDir = File(dir, subDir)
         mediaStorageDir.apply {
             if (!exists()) {
                 if (!mkdirs()) {
@@ -163,7 +173,10 @@ class MainActivity : AppCompatActivity() {
     ) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
-                view_finder.post { bindCameraUseCases() }
+                view_finder.post {
+                    updateCameraUi()
+                    bindCameraUseCases()
+                }
             } else {
                 Toast.makeText(this, "Permissions not granted by the user.", Toast.LENGTH_SHORT)
                     .show()
@@ -185,6 +198,7 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "PhotoFilterApp"
         private const val KEY_LENS_FACING = "key_lens_facing"
         private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
+        private val REQUIRED_PERMISSIONS =
+            arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     }
 }
