@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Rational
-import android.view.TextureView
 import android.widget.ImageButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -14,22 +13,19 @@ import androidx.camera.core.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.softartdev.photofilters.utils.AutoFitPreviewBuilder
+import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var viewFinder: TextureView
     private var lensFacing = CameraX.LensFacing.BACK
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        viewFinder = findViewById(R.id.view_finder)
-
         // Request camera permissions
         if (allPermissionsGranted()) {
-            viewFinder.post { startCamera() }
+            view_finder.post { startCamera() }
         } else {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
@@ -37,7 +33,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startCamera() {
         // Get screen metrics used to setup camera for full screen resolution
-        val metrics = DisplayMetrics().also { viewFinder.display.getRealMetrics(it) }
+        val metrics = DisplayMetrics().also { view_finder.display.getRealMetrics(it) }
         val screenAspectRatio = Rational(metrics.widthPixels, metrics.heightPixels)
         Log.d(TAG, "Screen metrics: ${metrics.widthPixels} x ${metrics.heightPixels}")
 
@@ -48,11 +44,11 @@ class MainActivity : AppCompatActivity() {
             setTargetAspectRatio(screenAspectRatio)
             // Set initial target rotation, we will have to call this again if rotation changes
             // during the lifecycle of this use case
-            setTargetRotation(viewFinder.display.rotation)
+            setTargetRotation(view_finder.display.rotation)
         }.build()
 
         // Build the viewfinder use case
-        val preview = AutoFitPreviewBuilder.build(previewConfig, viewFinder)
+        val preview = AutoFitPreviewBuilder.build(previewConfig, view_finder)
 
         // Create configuration object for the image capture use case
         val imageCaptureConfig = ImageCaptureConfig.Builder().apply {
@@ -63,7 +59,7 @@ class MainActivity : AppCompatActivity() {
             setTargetAspectRatio(screenAspectRatio)
             // Set initial target rotation, we will have to call this again if rotation changes
             // during the lifecycle of this use case
-            setTargetRotation(viewFinder.display.rotation)
+            setTargetRotation(view_finder.display.rotation)
         }.build()
 
         // Build the image capture use case and attach button click listener
@@ -73,7 +69,7 @@ class MainActivity : AppCompatActivity() {
                 override fun onCaptureSuccess(image: ImageProxy?, rotationDegrees: Int) {
                     val msg = "Photo capture succeeded: ${image?.image.toString()}"
                     Log.d(TAG, msg)
-                    viewFinder.post {
+                    view_finder.post {
                         Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
                     }
                     super.onCaptureSuccess(image, rotationDegrees)
@@ -85,7 +81,7 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     val msg = "Photo capture failed: $message"
                     Log.e(TAG, msg, cause)
-                    viewFinder.post {
+                    view_finder.post {
                         Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -101,7 +97,7 @@ class MainActivity : AppCompatActivity() {
     ) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
-                viewFinder.post { startCamera() }
+                view_finder.post { startCamera() }
             } else {
                 Toast.makeText(this, "Permissions not granted by the user.", Toast.LENGTH_SHORT)
                     .show()
