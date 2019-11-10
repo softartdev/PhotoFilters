@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Rational
-import android.widget.ImageButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
@@ -19,19 +18,65 @@ import kotlinx.android.synthetic.main.activity_main.*
 class MainActivity : AppCompatActivity() {
 
     private var lensFacing = CameraX.LensFacing.BACK
+    private var imageCapture: ImageCapture? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        lensFacing = savedInstanceState?.getInt(KEY_LENS_FACING)?.let { CameraX.LensFacing.values()[it] }
+                ?: CameraX.LensFacing.BACK
         // Request camera permissions
         if (allPermissionsGranted()) {
-            view_finder.post { startCamera() }
+            view_finder.post {
+                updateCameraUi()
+                bindCameraUseCases()
+            }
         } else {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
     }
 
-    private fun startCamera() {
+    private fun updateCameraUi() {
+        camera_switch_button.setOnClickListener {
+            lensFacing = when (lensFacing) {
+                CameraX.LensFacing.FRONT -> CameraX.LensFacing.BACK
+                CameraX.LensFacing.BACK -> CameraX.LensFacing.FRONT
+            }
+            try {
+                // Unbind all use cases and bind them again with the new lens facing configuration
+                CameraX.unbindAll()
+                bindCameraUseCases()
+            } catch (exc: Exception) {
+                // Do nothing
+            }
+        }
+        camera_capture_button.setOnClickListener {
+            imageCapture?.takePicture(object : ImageCapture.OnImageCapturedListener() {
+                override fun onCaptureSuccess(image: ImageProxy?, rotationDegrees: Int) {
+                    val msg = "Photo capture succeeded: ${image?.image.toString()}"
+                    Log.d(TAG, msg)
+                    view_finder.post {
+                        Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                    }
+                    super.onCaptureSuccess(image, rotationDegrees)
+                }
+
+                override fun onError(
+                    imageCaptureError: ImageCapture.ImageCaptureError,
+                    message: String,
+                    cause: Throwable?
+                ) {
+                    val msg = "Photo capture failed: $message"
+                    Log.e(TAG, msg, cause)
+                    view_finder.post {
+                        Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            })
+        }
+    }
+
+    private fun bindCameraUseCases() {
         // Get screen metrics used to setup camera for full screen resolution
         val metrics = DisplayMetrics().also { view_finder.display.getRealMetrics(it) }
         val screenAspectRatio = Rational(metrics.widthPixels, metrics.heightPixels)
@@ -63,30 +108,8 @@ class MainActivity : AppCompatActivity() {
         }.build()
 
         // Build the image capture use case and attach button click listener
-        val imageCapture = ImageCapture(imageCaptureConfig)
-        findViewById<ImageButton>(R.id.camera_capture_button).setOnClickListener {
-            imageCapture.takePicture(object : ImageCapture.OnImageCapturedListener() {
-                override fun onCaptureSuccess(image: ImageProxy?, rotationDegrees: Int) {
-                    val msg = "Photo capture succeeded: ${image?.image.toString()}"
-                    Log.d(TAG, msg)
-                    view_finder.post {
-                        Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
-                    }
-                    super.onCaptureSuccess(image, rotationDegrees)
-                }
-                override fun onError(
-                    imageCaptureError: ImageCapture.ImageCaptureError,
-                    message: String,
-                    cause: Throwable?
-                ) {
-                    val msg = "Photo capture failed: $message"
-                    Log.e(TAG, msg, cause)
-                    view_finder.post {
-                        Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
-                    }
-                }
-            })
-        }
+        imageCapture = ImageCapture(imageCaptureConfig)
+
         CameraX.bindToLifecycle(this, preview, imageCapture)
     }
 
@@ -97,7 +120,7 @@ class MainActivity : AppCompatActivity() {
     ) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
-                view_finder.post { startCamera() }
+                view_finder.post { bindCameraUseCases() }
             } else {
                 Toast.makeText(this, "Permissions not granted by the user.", Toast.LENGTH_SHORT)
                     .show()
@@ -110,8 +133,14 @@ class MainActivity : AppCompatActivity() {
         ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putInt(KEY_LENS_FACING, lensFacing.ordinal)
+        super.onSaveInstanceState(outState)
+    }
+
     companion object {
         private const val TAG = "PhotoFilterApp"
+        private const val KEY_LENS_FACING = "key_lens_facing"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
