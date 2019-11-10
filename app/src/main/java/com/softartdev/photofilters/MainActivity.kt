@@ -71,6 +71,12 @@ class MainActivity : AppCompatActivity() {
             }
             imageCapture?.takePicture(getOutputMediaFile(), imageSavedListener, metadata)
         }
+        photo_view_button.setOnClickListener {
+            val openImageIntent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("image/*")
+            startActivityForResult(openImageIntent, READ_REQUEST_CODE)
+        }
     }
 
     private fun bindCameraUseCases() {
@@ -166,6 +172,14 @@ class MainActivity : AppCompatActivity() {
         return File("${mediaStorageDir.path}${File.separator}IMG_$timeStamp.jpg")
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) =
+        if (requestCode == READ_REQUEST_CODE && resultCode == RESULT_OK) {
+            data?.data?.let {
+                Log.i(TAG, "picked image: $it")
+                startActivity(FilterActivity.getStartIntent(this@MainActivity, it))
+            } ?: Log.e(TAG, "picked image is null"); Unit
+        } else super.onActivityResult(requestCode, resultCode, data)
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<String>,
@@ -197,6 +211,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "PhotoFilterApp"
         private const val KEY_LENS_FACING = "key_lens_facing"
+        private const val READ_REQUEST_CODE = 42
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS =
             arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE)
