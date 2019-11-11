@@ -43,16 +43,20 @@ class FilterActivity : AppCompatActivity(), Observer<BitmapListResult> {
             filter_content_view.apply {
                 val bitmapList: List<Bitmap> = result.bitmapList!!
 
-                val blurBitmap = bitmapList[0]
+                val originalBitmap = bitmapList[0]
+                setThumbnail(filter_original_radio_button, originalBitmap)
+
+                val blurBitmap = bitmapList[1]
                 setThumbnail(filter_blur_radio_button, blurBitmap)
 
-                val convolveBitmap = bitmapList[1]
+                val convolveBitmap = bitmapList[2]
                 setThumbnail(filter_emboss_radio_button, convolveBitmap)
 
-                val hueBitmap = bitmapList[2]
+                val hueBitmap = bitmapList[3]
                 setThumbnail(filter_hue_radio_button, hueBitmap)
 
-                filter_image_view.setImageBitmap(blurBitmap)
+                filter_image_view.setImageBitmap(originalBitmap)
+                filter_original_radio_button.isChecked = true
             }.visible()
             filter_error_view.gone()
         }

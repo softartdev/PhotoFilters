@@ -26,11 +26,12 @@ class FilterTask(
             Allocation.createFromBitmap(rs, bitmapsOut[i])
         }
         val modes = intArrayOf(
+            MODE_ORIGINAL,
             MODE_BLUR,
             MODE_CONVOLVE,
             MODE_COLOR_MATRIX
         )
-        val parameter = intArrayOf(50, 100, 25)
+        val parameter = intArrayOf(0, 50, 100, 25)
         (0 until NUM_BITMAPS).forEach { i ->
             val outAllocation = outAllocations[i]
             val bitmapOut = bitmapsOut[i]
@@ -54,6 +55,7 @@ class FilterTask(
     private fun getFilterParameter(mode: Int, seek: Int): Float {
         var f = 0f
         when (mode) {
+            MODE_ORIGINAL -> return f
             MODE_BLUR -> {
                 val max = 25.0f
                 val min = 1f
@@ -75,6 +77,10 @@ class FilterTask(
 
     private fun performFilter(mode: Int, inAllocation: Allocation, outAllocation: Allocation, bitmapOut: Bitmap, value: Float) {
         when (mode) {
+            MODE_ORIGINAL -> {
+                inAllocation.copyTo(bitmapOut)
+                return
+            }
             MODE_BLUR -> {
                 val scriptBlur = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs))
                 // Set blur kernel size
@@ -129,10 +135,10 @@ class FilterTask(
         /**
          * Number of bitmaps that is used for renderScript thread and UI thread synchronization.
          */
-        private const val NUM_BITMAPS = 3
-
-        private const val MODE_BLUR = 0
-        private const val MODE_CONVOLVE = 1
-        private const val MODE_COLOR_MATRIX = 2
+        private const val NUM_BITMAPS = 4
+        private const val MODE_ORIGINAL = 0
+        private const val MODE_BLUR = 1
+        private const val MODE_CONVOLVE = 2
+        private const val MODE_COLOR_MATRIX = 3
     }
 }

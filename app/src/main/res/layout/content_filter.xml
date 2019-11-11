@@ -33,6 +33,14 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <com.softartdev.photofilters.ui.filter.ThumbnailRadioButton
+            android:id="@+id/filter_original_radio_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/original"
+            android:textColor="@android:color/white" />
+
+        <com.softartdev.photofilters.ui.filter.ThumbnailRadioButton
             android:id="@+id/filter_blur_radio_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
