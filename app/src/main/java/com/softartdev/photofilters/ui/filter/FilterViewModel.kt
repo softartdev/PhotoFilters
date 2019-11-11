@@ -10,7 +10,7 @@ import androidx.lifecycle.ViewModel
 import com.softartdev.photofilters.model.BitmapListResult
 
 class FilterViewModel(
-    private val imageUri: Uri,
+    internal val imageUri: Uri,
     private val applicationContext: Context
 ) : ViewModel() {
 
@@ -40,5 +40,19 @@ class FilterViewModel(
 
     override fun onCleared() {
         filterTask?.cancel(true)
+    }
+
+    fun saveByIndex(bitmapIndex: Int): Boolean = try {
+        if (bitmapIndex != 0) { // Original image already must be saved
+            val bitmap = filterLiveData.value!!.bitmapList!![bitmapIndex]
+            val outputStream = applicationContext.contentResolver.openOutputStream(imageUri)!!
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+            outputStream.flush()
+            outputStream.close()
+        }
+        true
+    } catch (throwable: Throwable) {
+        throwable.printStackTrace()
+        false
     }
 }

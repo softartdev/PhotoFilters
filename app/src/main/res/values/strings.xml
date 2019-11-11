@@ -12,4 +12,8 @@
     <string name="please_wait">Please wait…</string>
     <string name="label_error_result">Oops, there was an error fetching the data</string>
     <string name="button_try_again">Try again</string>
+    <string name="share">Share</string>
+    <string name="check_for_share">Please, check filter item for share</string>
+    <string name="fail_share">Oops, there was an error sharing the data</string>
+    <string name="share_to">Share image to…</string>
 </resources>
