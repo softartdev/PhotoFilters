@@ -1,4 +1,4 @@
-package com.softartdev.photofilters.ui
+package com.softartdev.photofilters.ui.filter
 
 import android.content.Context
 import android.graphics.Bitmap

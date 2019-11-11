@@ -1,4 +1,4 @@
-package com.softartdev.photofilters.ui
+package com.softartdev.photofilters.ui.filter
 
 import android.graphics.Bitmap
 import android.os.AsyncTask
@@ -25,7 +25,11 @@ class FilterTask(
         val outAllocations: Array<Allocation> = Array(NUM_BITMAPS) { i: Int ->
             Allocation.createFromBitmap(rs, bitmapsOut[i])
         }
-        val modes = intArrayOf(MODE_BLUR, MODE_CONVOLVE, MODE_COLOR_MATRIX)
+        val modes = intArrayOf(
+            MODE_BLUR,
+            MODE_CONVOLVE,
+            MODE_COLOR_MATRIX
+        )
         val parameter = intArrayOf(50, 100, 25)
         (0 until NUM_BITMAPS).forEach { i ->
             val outAllocation = outAllocations[i]

@@ -1,4 +1,4 @@
-package com.softartdev.photofilters.utils
+package com.softartdev.photofilters.util
 
 import android.content.ContentResolver
 import android.content.ContentValues
