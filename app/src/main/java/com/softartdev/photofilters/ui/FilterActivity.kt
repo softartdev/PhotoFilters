@@ -1,10 +1,11 @@
-package com.softartdev.photofilters
+package com.softartdev.photofilters.ui
 
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.softartdev.photofilters.R
 import kotlinx.android.synthetic.main.activity_filter.*
 
 class FilterActivity : AppCompatActivity() {
