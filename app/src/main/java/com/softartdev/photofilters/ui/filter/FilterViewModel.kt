@@ -2,10 +2,9 @@ package com.softartdev.photofilters.ui.filter
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.drawable.Drawable
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.renderscript.RenderScript
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.softartdev.photofilters.model.BitmapListResult
@@ -26,12 +25,13 @@ class FilterViewModel(
     fun loadFilterResults() = try {
         filterTask?.cancel(true)
         filterLiveData.postValue(BitmapListResult.Loading)
-        val drawable: Drawable = Drawable.createFromPath(imageUri.path)!!
-        val bitmap: Bitmap = drawable.toBitmap()
+        val inputStream = applicationContext.contentResolver.openInputStream(imageUri)
+        val bitmap: Bitmap = BitmapFactory.decodeStream(inputStream)
         val rs = RenderScript.create(applicationContext)
         filterTask = FilterTask(bitmap, rs, filterLiveData)
         filterTask?.execute()
     } catch (throwable: Throwable) {
+        throwable.printStackTrace()
         val error = BitmapListResult.Error(throwable.message)
         filterLiveData.postValue(error)
     } finally {

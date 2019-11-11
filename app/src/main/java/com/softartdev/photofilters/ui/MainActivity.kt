@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -66,8 +67,7 @@ class MainActivity : AppCompatActivity() {
             imageCapture?.takePicture(file, imageSavedListener, metadata)
         }
         photo_view_button.setOnClickListener {
-            val openImageIntent = Intent(Intent.ACTION_GET_CONTENT)
-                .setType("image/*")
+            val openImageIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             startActivityForResult(openImageIntent, IMAGE_REQUEST_CODE)
         }
     }
