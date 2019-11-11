@@ -22,10 +22,12 @@ import com.softartdev.photofilters.util.Util
 import com.softartdev.photofilters.util.Util.TAG
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
+import java.util.concurrent.Executors
 
 
 class MainActivity : AppCompatActivity() {
 
+    private val executor by lazy { Executors.newSingleThreadExecutor() }
     private var lensFacing = CameraX.LensFacing.BACK
     private var imageCapture: ImageCapture? = null
 
@@ -59,12 +61,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
         camera_capture_button.setOnClickListener {
-            val file = Util.getOutputMediaFile(contentResolver)
+            val file = Util.getOutputMediaFile(contentResolver) ?: return@setOnClickListener
             val imageSavedListener = createImageSavedListener()
             val metadata = ImageCapture.Metadata().apply {
                 isReversedHorizontal = lensFacing == CameraX.LensFacing.FRONT
             }
-            imageCapture?.takePicture(file, imageSavedListener, metadata)
+            imageCapture?.takePicture(file, metadata, executor, imageSavedListener)
         }
         photo_view_button.setOnClickListener {
             val openImageIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
