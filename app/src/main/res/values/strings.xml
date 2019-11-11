@@ -3,4 +3,12 @@
     <string name="capture_button_alt">Capture</string>
     <string name="switch_camera_button_alt">Switch camera</string>
     <string name="gallery_button_alt">Gallery</string>
+    <string name="blur">Blur</string>
+    <string name="emboss">Emboss</string>
+    <string name="hue">Hue</string>
+    <string name="update">Update</string>
+    <string name="loading">Loading</string>
+    <string name="please_wait">Please wait…</string>
+    <string name="label_error_result">Oops, there was an error fetching the data</string>
+    <string name="button_try_again">Try again</string>
 </resources>
