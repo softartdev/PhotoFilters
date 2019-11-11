@@ -3,4 +3,7 @@
     <string name="capture_button_alt">Capture</string>
     <string name="switch_camera_button_alt">Switch camera</string>
     <string name="gallery_button_alt">Gallery</string>
+    <string name="blur">Blur</string>
+    <string name="emboss">Emboss</string>
+    <string name="hue">Hue</string>
 </resources>
