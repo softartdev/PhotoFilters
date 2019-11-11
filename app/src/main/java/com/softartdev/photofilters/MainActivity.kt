@@ -1,6 +1,7 @@
 package com.softartdev.photofilters
 
 import android.Manifest
+import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.Camera
@@ -9,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.MediaStore
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Rational
@@ -21,6 +23,7 @@ import androidx.camera.core.ImageCaptureConfig
 import androidx.camera.core.PreviewConfig
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.net.toFile
 import com.softartdev.photofilters.utils.AutoFitPreviewBuilder
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
@@ -156,20 +159,44 @@ class MainActivity : AppCompatActivity() {
         }
 
     private fun getOutputMediaFile(): File? {
-        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-        val subDir = "Photo_Filters"
-        val mediaStorageDir = File(dir, subDir)
-        mediaStorageDir.apply {
-            if (!exists()) {
-                if (!mkdirs()) {
-                    Log.d(TAG, "failed to create directory")
-                    return null
-                }
-            }
-        }
+        val subDir = "Photo Filters"
         val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS", Locale.ROOT)
         val timeStamp = simpleDateFormat.format(Date())
-        return File("${mediaStorageDir.path}${File.separator}IMG_$timeStamp.jpg")
+        val fileName = "$timeStamp.jpg"
+
+        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
+            val values: ContentValues = ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+                put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                put(MediaStore.Images.Media.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/$subDir")
+                put(MediaStore.Images.Media.IS_PENDING, 1)
+            }
+            val collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            val item: Uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)!!
+            Log.d(TAG, "media store uri: $item")
+            contentResolver.openFileDescriptor(item, "w", null)?.detachFd()
+            values.clear()
+/*
+            contentResolver.openFileDescriptor(item, "w", null).use { pfd ->
+                // Write data into the pending image.
+            }
+            // Now that we're finished, release the "pending" status, and allow other apps
+            // to view the image.
+            values.clear()
+            values.put(MediaStore.Images.Media.IS_PENDING, 0)*/
+            contentResolver.update(item, values, null, null)
+        }
+            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val mediaStorageDir = File(dir, subDir)
+            mediaStorageDir.apply {
+                if (!exists()) {
+                    if (!mkdirs()) {
+                        Log.d(TAG, "failed to create directory")
+                        return null
+                    }
+                }
+            }
+            return File("${mediaStorageDir.path}${File.separator}IMG_$fileName")
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) =
