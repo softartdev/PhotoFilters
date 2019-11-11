@@ -15,9 +15,10 @@ import androidx.camera.core.PreviewConfig
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.softartdev.photofilters.R
-import com.softartdev.photofilters.utils.AutoFitPreviewBuilder
-import com.softartdev.photofilters.utils.Util
-import com.softartdev.photofilters.utils.Util.TAG
+import com.softartdev.photofilters.ui.filter.FilterActivity
+import com.softartdev.photofilters.util.AutoFitPreviewBuilder
+import com.softartdev.photofilters.util.Util
+import com.softartdev.photofilters.util.Util.TAG
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 

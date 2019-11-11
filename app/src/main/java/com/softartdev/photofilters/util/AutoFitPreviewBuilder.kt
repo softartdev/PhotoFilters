@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.softartdev.photofilters.utils
+package com.softartdev.photofilters.util
 
 import android.content.Context
 import android.graphics.Matrix
