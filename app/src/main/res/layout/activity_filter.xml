@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.filter.FilterActivity">
+
+    <include layout="@layout/content_filter" />
+
+    <com.softartdev.photofilters.ui.common.ProgressView
+        android:id="@+id/filter_progress_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:visibility="gone" />
+
+    <com.softartdev.photofilters.ui.common.ErrorView
+        android:id="@+id/filter_error_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:visibility="gone" />
+
+</FrameLayout>
