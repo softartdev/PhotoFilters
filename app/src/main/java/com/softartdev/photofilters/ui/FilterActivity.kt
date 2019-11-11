@@ -4,13 +4,13 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
 import android.renderscript.*
-import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.graphics.drawable.toBitmap
 import com.softartdev.photofilters.R
 import kotlinx.android.synthetic.main.activity_filter.*
 import kotlin.math.cos
@@ -39,12 +39,10 @@ class FilterActivity : AppCompatActivity() {
         setContentView(R.layout.activity_filter)
 
         val imageUri: Uri = intent.getParcelableExtra(EXTRA_IMAGE_URI)!!
-//        filter_image_view.setImageURI(imageUri)
+        val drawable = Drawable.createFromPath(imageUri.path)
 
         // Set up main image view
-        val options = BitmapFactory.Options()
-        options.inPreferredConfig = Bitmap.Config.ARGB_8888
-        mBitmapIn = BitmapFactory.decodeFile(imageUri.path, options)
+        mBitmapIn = drawable?.toBitmap()
         val width = mBitmapIn!!.width
         val height = mBitmapIn!!.height
         val config = mBitmapIn!!.config
@@ -53,32 +51,23 @@ class FilterActivity : AppCompatActivity() {
         filter_image_view.setImageBitmap(mBitmapsOut!![mCurrentBitmap])
         mCurrentBitmap += (mCurrentBitmap + 1) % NUM_BITMAPS
 
-        //Set up seekbar
-        filter_seek_bar.progress = 50
-        filter_seek_bar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                updateImage(progress)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar) {}
-        })
         //Setup effect selector
         filter_blur_radio_button.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 mFilterMode = MODE_BLUR
-                updateImage(filter_seek_bar.progress)
+                updateImage(50)
             }
         }
         filter_emboss_radio_button.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 mFilterMode = MODE_CONVOLVE
-                updateImage(filter_seek_bar.progress)
+                updateImage(100)
             }
         }
         filter_hue_radio_button.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 mFilterMode = MODE_COLORMATRIX
-                updateImage(filter_seek_bar.progress)
+                updateImage(25)
             }
         }
         // Create renderScript
