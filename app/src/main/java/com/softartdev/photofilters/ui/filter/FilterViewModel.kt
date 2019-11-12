@@ -5,10 +5,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.renderscript.RenderScript
-import androidx.core.content.FileProvider
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.softartdev.photofilters.BuildConfig
 import com.softartdev.photofilters.model.BitmapListResult
 import com.softartdev.photofilters.util.Util
 
@@ -45,18 +43,17 @@ class FilterViewModel(
         filterTask?.cancel(true)
     }
 
-    fun saveByIndex(bitmapIndex: Int): Uri? = try {
-        if (bitmapIndex != 0) { // Original image already must be saved
-            val bitmap = filterLiveData.value!!.bitmapList!![bitmapIndex]
-            val file = Util.getOutputMediaFile(applicationContext.contentResolver)!!
-            val authority = "${BuildConfig.APPLICATION_ID}.provider"
-            val uri = FileProvider.getUriForFile(applicationContext, authority, file)
-            val outputStream = applicationContext.contentResolver.openOutputStream(uri)!!
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-            outputStream.flush()
-            outputStream.close()
-            uri
-        } else imageUri
+    fun saveByIndex(bitmapIndex: Int): Uri? = if (bitmapIndex == 0) {
+        imageUri // Original image already must be saved
+    } else try {
+        val file = Util.createFile(applicationContext)
+        val uri = Util.uriFromFileProvider(applicationContext, file)
+        val outputStream = applicationContext.contentResolver.openOutputStream(uri)!!
+        val bitmap = filterLiveData.value!!.bitmapList!![bitmapIndex]
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+        outputStream.flush()
+        outputStream.close()
+        uri
     } catch (throwable: Throwable) {
         throwable.printStackTrace()
         null

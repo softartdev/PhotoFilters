@@ -5,9 +5,9 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
@@ -15,12 +15,12 @@ import androidx.lifecycle.ViewModelProviders
 import com.softartdev.photofilters.R
 import com.softartdev.photofilters.model.BitmapListResult
 import com.softartdev.photofilters.model.ResultState
+import com.softartdev.photofilters.util.Util
 import com.softartdev.photofilters.util.gone
 import com.softartdev.photofilters.util.visible
 import kotlinx.android.synthetic.main.activity_filter.*
 import kotlinx.android.synthetic.main.content_filter.*
 import kotlinx.android.synthetic.main.view_error.view.*
-import java.io.File
 
 class FilterActivity : AppCompatActivity(), Observer<BitmapListResult> {
 
@@ -106,17 +106,14 @@ class FilterActivity : AppCompatActivity(), Observer<BitmapListResult> {
             }
             checkedIndex?.let { index ->
                 viewModel.saveByIndex(index)?.let { uri: Uri ->
+                    Log.d(Util.TAG, "make share intent for uri $uri")
                     val shareIntent: Intent = Intent().apply {
-                        uri.path?.let {
-                            val mediaFile = File(it)
-                            val mediaType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(mediaFile.extension)
-                            type = mediaType
-                        }
                         action = Intent.ACTION_SEND
                         putExtra(Intent.EXTRA_STREAM, uri)
                         type = "image/jpeg"
-                        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
+                    grantUriPermission(packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     startActivity(Intent.createChooser(shareIntent, resources.getText(R.string.share_to)))
                 } ?: Toast.makeText(this, R.string.fail_share, Toast.LENGTH_SHORT).show()
             } ?: Toast.makeText(this, R.string.check_for_share, Toast.LENGTH_SHORT).show()

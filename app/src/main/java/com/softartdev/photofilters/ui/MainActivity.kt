@@ -3,7 +3,6 @@ package com.softartdev.photofilters.ui
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
@@ -59,7 +58,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         camera_capture_button.setOnClickListener {
-            val file = Util.getOutputMediaFile(contentResolver)
+            val file = Util.createFile(applicationContext)
             val imageSavedListener = createImageSavedListener()
             val metadata = ImageCapture.Metadata().apply {
                 isReversedHorizontal = lensFacing == CameraX.LensFacing.FRONT
@@ -93,7 +92,7 @@ class MainActivity : AppCompatActivity() {
         object : ImageCapture.OnImageSavedListener {
             override fun onImageSaved(photoFile: File) {
                 Log.d(TAG, "Photo capture succeeded: ${photoFile.absolutePath}")
-                val photoUri = Uri.fromFile(photoFile)
+                val photoUri = Util.uriFromFileProvider(applicationContext, photoFile)
                 startActivity(FilterActivity.getStartIntent(this@MainActivity, photoUri))
             }
 
@@ -144,11 +143,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val KEY_LENS_FACING = "key_lens_facing"
-        private val REQUIRED_PERMISSIONS = arrayOf(
-            Manifest.permission.CAMERA,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-        )
+        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
         private const val REQUEST_CODE_PERMISSIONS = 10
         private const val IMAGE_REQUEST_CODE = 42
     }
